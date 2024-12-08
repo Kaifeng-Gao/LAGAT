@@ -33,8 +33,7 @@ else:
 
 
 class LAGATConv(MessagePassing):
-    r"""The graph attentional operator from the `"Graph Attention Networks"
-    <https://arxiv.org/abs/1710.10903>`_ paper.
+    r"""The label aware graph attentional operator from LAGAT (https://github.com/Kaifeng-Gao/LAGAT)
 
     .. math::
         \mathbf{x}^{\prime}_i = \sum_{j \in \mathcal{N}(i) \cup \{ i \}}
@@ -48,12 +47,16 @@ class LAGATConv(MessagePassing):
         \exp\left(\mathrm{LeakyReLU}\left(
         \mathbf{a}^{\top}_{s} \mathbf{\Theta}_{s}\mathbf{x}_i
         + \mathbf{a}^{\top}_{t} \mathbf{\Theta}_{t}\mathbf{x}_j
+        + \mathbf{a}^{\top}_{l} \mathbf{\Theta}_{l} \mathbf{l}_{i,j}
         \right)\right)}
         {\sum_{k \in \mathcal{N}(i) \cup \{ i \}}
         \exp\left(\mathrm{LeakyReLU}\left(
         \mathbf{a}^{\top}_{s} \mathbf{\Theta}_{s}\mathbf{x}_i
         + \mathbf{a}^{\top}_{t}\mathbf{\Theta}_{t}\mathbf{x}_k
+        + \mathbf{a}^{\top}_{l} \mathbf{\Theta}_{l} \mathbf{l}_{i,k}
         \right)\right)}.
+
+    :math:`\mathbf{l}_{i,j}` are the label embedding of `j` given center node `i`
 
     If the graph has multi-dimensional edge features :math:`\mathbf{e}_{i,j}`,
     the attention coefficients :math:`\alpha_{i,j}` are computed as
@@ -65,12 +68,14 @@ class LAGATConv(MessagePassing):
         \mathbf{a}^{\top}_{s} \mathbf{\Theta}_{s}\mathbf{x}_i
         + \mathbf{a}^{\top}_{t} \mathbf{\Theta}_{t}\mathbf{x}_j
         + \mathbf{a}^{\top}_{e} \mathbf{\Theta}_{e} \mathbf{e}_{i,j}
+        + \mathbf{a}^{\top}_{l} \mathbf{\Theta}_{l} \mathbf{l}_{i,j}
         \right)\right)}
         {\sum_{k \in \mathcal{N}(i) \cup \{ i \}}
         \exp\left(\mathrm{LeakyReLU}\left(
         \mathbf{a}^{\top}_{s} \mathbf{\Theta}_{s}\mathbf{x}_i
         + \mathbf{a}^{\top}_{t} \mathbf{\Theta}_{t}\mathbf{x}_k
         + \mathbf{a}^{\top}_{e} \mathbf{\Theta}_{e} \mathbf{e}_{i,k}
+        + \mathbf{a}^{\top}_{l} \mathbf{\Theta}_{l} \mathbf{l}_{i,k}
         \right)\right)}.
 
     If the graph is not bipartite, :math:`\mathbf{\Theta}_{s} =
@@ -82,6 +87,8 @@ class LAGATConv(MessagePassing):
             A tuple corresponds to the sizes of source and target
             dimensionalities in case of a bipartite graph.
         out_channels (int): Size of each output sample.
+        num_labels (int): Number of unique labels in the graph.
+        label_embedding_dim (int): Dimensionality of the label embeddings.
         heads (int, optional): Number of multi-head-attentions.
             (default: :obj:`1`)
         concat (bool, optional): If set to :obj:`False`, the multi-head
@@ -118,6 +125,7 @@ class LAGATConv(MessagePassing):
           :math:`((|\mathcal{V_s}|, F_{s}), (|\mathcal{V_t}|, F_{t}))`
           if bipartite,
           edge indices :math:`(2, |\mathcal{E}|)`,
+          label information 
           edge features :math:`(|\mathcal{E}|, D)` *(optional)*
         - **output:** node features :math:`(|\mathcal{V}|, H * F_{out})` or
           :math:`((|\mathcal{V}_t|, H * F_{out})` if bipartite.
@@ -285,6 +293,7 @@ class LAGATConv(MessagePassing):
             x (torch.Tensor or (torch.Tensor, torch.Tensor)): The input node
                 features.
             edge_index (torch.Tensor or SparseTensor): The edge indices.
+            label_index (torch.Tensor): The input node labels.
             edge_attr (torch.Tensor, optional): The edge features.
                 (default: :obj:`None`)
             size ((int, int), optional): The shape of the adjacency matrix.
