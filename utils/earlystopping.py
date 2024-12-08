@@ -4,7 +4,7 @@ import torch
 
 class EarlyStopping:
     def __init__(self, dataset_name, timestamp, patience=30, log_dir=None):
-        self._filename = f"early_stop_{timestamp}.pth"
+        self._filename = f"LAGAT_{timestamp}.pth"
         self._save_dir = os.path.join('checkpoints', dataset_name)
         if log_dir:
             self._save_dir = os.path.join(log_dir, self._save_dir)
