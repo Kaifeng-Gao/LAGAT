@@ -13,7 +13,7 @@ def load_fraud_dataset(dataset_name, train_size, val_size, random_seed, force_re
     )
     graph = fraud_data[0]
     data = from_dgl(graph)
-    mask_label(data)
+    mask_label(data, observed_pct=0.6)
     return data
 
 

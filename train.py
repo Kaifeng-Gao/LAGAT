@@ -7,6 +7,7 @@ import time
 
 from config.config import PARAM_GRID, create_grid_search_configs
 from model.lagat import LAGAT
+from model.gat import GAT
 from data.load_fraud_dataset import load_fraud_dataset
 from utils.earlystopping import EarlyStopping
 from utils.logging import init_wandb, log_metrics
@@ -19,10 +20,13 @@ parser.add_argument('--use_wandb', action='store_true',
                     help='Use Weights & Biases for logging')
 args = parser.parse_args()
 
-def train_model(model, data, optimizer, device, node_type):
+def train_model(model, data, optimizer, device, node_type, is_lagat):
     model.train()
     optimizer.zero_grad()
-    out = model(data.feature_dict, data.edge_index_dict, data.label_mask_dict)
+    if is_lagat:
+        out = model(data.feature_dict, data.edge_index_dict, data.label_mask_dict)
+    else:
+        out = model(data.feature_dict, data.edge_index_dict)
 
     train_mask = data[node_type].train_mask.to(device)
     label = data[node_type].label.to(device)
@@ -53,16 +57,30 @@ def main():
         )
         
         # Initialize model
-        model = LAGAT(
-            in_channels=config.in_channels,
-            hidden_channels=config.hidden_channels,
-            num_layers=config.num_layers,
-            out_channels=config.out_channels,
-            num_labels=config.num_labels,
-            label_embedding_dim=config.label_embedding_dim,
-            heads=config.heads,
-            dropout=config.dropout
-        )
+        if config.model_name == "LAGAT":
+            is_lagat = True
+            model = LAGAT(
+                in_channels=config.in_channels,
+                hidden_channels=config.hidden_channels,
+                num_layers=config.num_layers,
+                out_channels=config.out_channels,
+                num_labels=config.num_labels,
+                label_embedding_dim=config.label_embedding_dim,
+                heads=config.heads,
+                dropout=config.dropout
+            )
+        elif config.model_name == "GAT":
+            is_lagat = False
+            model = GAT(
+                in_channels=config.in_channels,
+                hidden_channels=config.hidden_channels,
+                num_layers=config.num_layers,
+                out_channels=config.out_channels,
+                heads=config.heads,
+                dropout=config.dropout
+            )
+        else:
+            raise ValueError(f"Unknown model name: {config.model_name}")
         
         model = to_hetero(model, data.metadata(), aggr='sum')
         model = model.to(device)
@@ -83,9 +101,9 @@ def main():
         
         progress_bar = tqdm(range(config.epochs), desc='Training')
         for epoch in progress_bar:
-            train_loss = train_model(model, data, optimizer, device, config.target_node_type)
+            train_loss = train_model(model, data, optimizer, device, config.target_node_type, is_lagat)
             # Evaluate model and get metrics for all splits
-            eval_results = evaluate(model, data, config.target_node_type)
+            eval_results = evaluate(model, data, config.target_node_type, is_lagat)
 
             # Log training metrics
             if args.use_wandb:
@@ -116,7 +134,7 @@ def main():
             })
         
         early_stopper.load_checkpoint(model)
-        eval_results = evaluate(model, data, config.target_node_type)
+        eval_results = evaluate(model, data, config.target_node_type, is_lagat)
         
         if args.use_wandb:
             # update summary metrics with the best model

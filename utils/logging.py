@@ -6,7 +6,7 @@ def init_wandb(config):
     wandb.init(
         project="LAGAT",
         config=config.__dict__,
-        name=f"lagat_{config.dataset_name}_{time.strftime('%Y%m%d-%H%M%S')}"
+        name=f"{config.model_name}_{config.dataset_name}_{time.strftime('%Y%m%d-%H%M%S')}"
     )
 
 def log_metrics(metrics, step, prefix=""):

@@ -2,11 +2,15 @@ import torch
 import torch.nn.functional as F
 from utils.metrics import calculate_metrics
 
-def evaluate(model, data, node_type):
+def evaluate(model, data, node_type, is_lagat):
     model.eval()
     losses = {}
     with torch.no_grad():
-        out = model(data.feature_dict, data.edge_index_dict, data.label_mask_dict)
+        if is_lagat:
+            out = model(data.feature_dict, data.edge_index_dict, data.label_mask_dict)
+        else:
+            out = model(data.feature_dict, data.edge_index_dict)
+
         scores = torch.softmax(out[node_type], dim=1)
         def calculate_split_loss(mask):
             mask_indices = mask.cpu().bool()

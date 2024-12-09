@@ -5,19 +5,23 @@ import itertools
 PARAM_GRID = {
     "dataset_config": [
         # dataset_name, target_node_type, in_channels
-        ("yelp", "review", 32),
-        # ("amazon", "user", 25)
+        # ("yelp", "review", 32),
+        ("amazon", "user", 25)
+    ],
+    "model_name": [
+        "LAGAT", 
+        "GAT"
     ],
     "train_size": [0.6],
-    "val_size": [0.1],
+    "val_size": [0.2],
     "random_seed": [42, 43, 44],
     "force_reload": [False],
     "epochs": [10000],
-    "toleration": [10],
+    "toleration": [300],
     "learning_rate": [0.005],
     "weight_decay": [5e-4],
     "hidden_channels": [32],
-    "label_embedding_dim": [32],
+    "label_embedding_dim": [4],
     "num_layers": [2],
     "num_labels": [3],
     "out_channels": [2],
@@ -42,6 +46,7 @@ class Config:
     weight_decay: float
     
     # Model parameters
+    model_name: str
     in_channels: int
     hidden_channels: int
     label_embedding_dim: int
