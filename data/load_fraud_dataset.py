@@ -3,7 +3,7 @@ from torch_geometric.utils import from_dgl
 import torch
 
 
-def load_fraud_dataset(dataset_name, train_size, val_size, random_seed, force_reload):
+def load_fraud_dataset(dataset_name, train_size, val_size, random_seed, force_reload, observed_ratio):
     fraud_data = FraudDataset(
         dataset_name,
         train_size=train_size,
@@ -13,7 +13,7 @@ def load_fraud_dataset(dataset_name, train_size, val_size, random_seed, force_re
     )
     graph = fraud_data[0]
     data = from_dgl(graph)
-    mask_label(data, observed_pct=0.6)
+    mask_label(data, observed_pct=observed_ratio)
     return data
 
 

@@ -11,6 +11,7 @@ from model.gat import GAT
 from data.load_fraud_dataset import load_fraud_dataset
 from utils.earlystopping import EarlyStopping
 from utils.logging import init_wandb, log_metrics
+from torch.optim.lr_scheduler import CosineAnnealingLR
 
 from evaluate import evaluate
 import argparse
@@ -53,7 +54,8 @@ def main():
             train_size=config.train_size,
             val_size=config.val_size,
             random_seed=config.random_seed,
-            force_reload=config.force_reload
+            force_reload=config.force_reload,
+            observed_ratio=config.observed_ratio
         )
         
         # Initialize model
@@ -92,7 +94,7 @@ def main():
             lr=config.learning_rate, 
             weight_decay=config.weight_decay
         )
-        
+
         early_stopper = EarlyStopping(
             dataset_name=config.dataset_name,
             timestamp=time.strftime("%Y%m%d-%H%M%S"),
