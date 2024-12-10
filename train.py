@@ -13,7 +13,7 @@ from utils.earlystopping import EarlyStopping
 from utils.logging import init_wandb, log_metrics
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
-from evaluate import evaluate
+from utils.evaluate import evaluate
 import argparse
 
 parser = argparse.ArgumentParser()
